@@ -101,9 +101,41 @@ namespace HamsterMall
                         WriteLights(writer, model);
                         WriteBackgroundAndAmbient(writer);
                         WriteVertices(writer, model);
+
+                        var saveFileInfo = new FileInfo(saveFileDialog1.FileName);
+                        var textureDirectoryPath = Path.Combine(saveFileInfo.DirectoryName, "textures");
+                        EnsureClearDirectory(textureDirectoryPath);
+                        WriteTextures(model, textureDirectoryPath);
                     }
                 }
+            }
+        }
 
+        private static void EnsureClearDirectory(string path)
+        {
+            if (Directory.Exists(path))
+            {
+                Directory.Delete(path, true);
+            }
+
+            Directory.CreateDirectory(path);
+        }
+
+        private void WriteTextures(ModelRoot model, string textureDirectoryPath)
+        {
+            var textures = model.LogicalNodes
+                .SelectMany(node => node.Mesh?.Primitives ?? Enumerable.Empty<MeshPrimitive>())
+                .Select(primitive => primitive.Material?.Channels?.FirstOrDefault(channel => channel.Key == "BaseColor").Texture)
+                .Where(texture => texture != null)
+                .GroupBy(texture => texture.PrimaryImage.Name)
+                .Select(texture => texture.First());
+
+            foreach (var texture in textures)
+            {
+                var image = texture.PrimaryImage;
+                var pngBytes = image.Content.Content.ToArray();
+                var pngPath = Path.Combine(textureDirectoryPath, image.Name + ".png");
+                File.WriteAllBytes(pngPath, pngBytes);
             }
         }
 
