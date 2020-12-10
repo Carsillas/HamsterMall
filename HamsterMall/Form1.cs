@@ -1,4 +1,4 @@
-﻿using SharpGLTF.Runtime;
+using SharpGLTF.Runtime;
 using SharpGLTF.Schema2;
 using System;
 using System.Collections.Generic;
@@ -234,7 +234,15 @@ namespace HamsterMall
                     writer.Write(1.0f); // power?
                     writer.Write(1); //has reflection
 
-                    writer.Write(0); // TODO: texture 
+                    if (g.texture != null)
+                    {
+                        writer.Write(1);
+                        writer.Write(g.texture);
+                    }
+                    else
+                    {
+                        writer.Write(0);
+                    }
 
                     writer.Write(g.strips.Count); // strip count
 
@@ -277,17 +285,24 @@ namespace HamsterMall
 
                     g.diffuse = Primitive.Material?.Channels?.First(channel => channel.Key == "BaseColor").Parameter ?? Vector4.One;
 
+                    var texture = Primitive.Material?.Channels?.FirstOrDefault(channel => channel.Key == "BaseColor").Texture;
+                    if (texture != null)
+                    {
+                        g.texture = texture.PrimaryImage.Name + ".png";
+                    }
 
                     GetVertexBuffer(Primitive, out List<Vector3> Vertices);
                     GetNormalBuffer(Primitive, out List<Vector3> Normals);
+                    GetTexCoordBuffer(Primitive, out List<Vector2> Uvs);
                     Vector3[] vs = Vertices.ToArray();
                     Vector3[] ns = Normals.ToArray();
+                    Vector2[] uvs = Uvs.ToArray();
                     GetIndexBuffer(Primitive, out List<(int A, int B, int C)> Indices);
 
                     //TODO stripify triangles
 
 
-                    foreach(var tri in Indices)
+                    foreach (var tri in Indices)
                     {
                         g.strips.Add(new strip { triangleCount = 1, vertexOffset = verts.Count });
                         Vector4 PosC = new Vector4(vs[tri.C].X, vs[tri.C].Y, vs[tri.C].Z, 1);
@@ -296,9 +311,9 @@ namespace HamsterMall
                         PosC = Vector4.Transform(PosC, Node.WorldMatrix);
                         PosB = Vector4.Transform(PosB, Node.WorldMatrix);
                         PosA = Vector4.Transform(PosA, Node.WorldMatrix);
-                        verts.Add(new Vertex { X = PosC.X, Y = PosC.Y, Z = PosC.Z, NX = ns[tri.C].X, NY = ns[tri.C].Y, NZ = ns[tri.C].Z }.Converted());
-                        verts.Add(new Vertex { X = PosB.X, Y = PosB.Y, Z = PosB.Z, NX = ns[tri.B].X, NY = ns[tri.B].Y, NZ = ns[tri.B].Z }.Converted());
-                        verts.Add(new Vertex { X = PosA.X, Y = PosA.Y, Z = PosA.Z, NX = ns[tri.A].X, NY = ns[tri.A].Y, NZ = ns[tri.A].Z }.Converted());
+                        verts.Add(new Vertex { X = PosC.X, Y = PosC.Y, Z = PosC.Z, NX = ns[tri.C].X, NY = ns[tri.C].Y, NZ = ns[tri.C].Z, U = uvs[tri.C].X, V = uvs[tri.C].Y }.Converted());
+                        verts.Add(new Vertex { X = PosB.X, Y = PosB.Y, Z = PosB.Z, NX = ns[tri.B].X, NY = ns[tri.B].Y, NZ = ns[tri.B].Z, U = uvs[tri.B].X, V = uvs[tri.B].Y }.Converted());
+                        verts.Add(new Vertex { X = PosA.X, Y = PosA.Y, Z = PosA.Z, NX = ns[tri.A].X, NY = ns[tri.A].Y, NZ = ns[tri.A].Z, U = uvs[tri.A].X, V = uvs[tri.A].Y }.Converted());
                     }
                     m.geoms.Add(g);
                 }
