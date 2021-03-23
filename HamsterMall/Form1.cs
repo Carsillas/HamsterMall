@@ -262,7 +262,7 @@ namespace HamsterMall
                     writer.Write(Vector4.Zero);//ambient
                     writer.Write(g.diffuse);//diffuse
                     writer.Write(Vector4.One / 4.0f);//spec
-                    writer.Write(Vector4.Zero);//emissive
+                    writer.Write(g.emissive);//emissive
                     writer.Write(1.0f); // power?
                     writer.Write(1); //has reflection
 
@@ -316,7 +316,9 @@ namespace HamsterMall
                     g.strips = new List<strip>();
 
                     g.diffuse = Primitive.Material?.Channels?.First(channel => channel.Key == "BaseColor").Parameter ?? Vector4.One;
-
+                    
+                    g.diffuse = Primitive.Material?.Channels?.First(channel => channel.Key == "Emission").Parameter ?? Vector4.Zero;
+                    
                     var texture = Primitive.Material?.Channels?.FirstOrDefault(channel => channel.Key == "BaseColor").Texture;
                     if (texture != null)
                     {
